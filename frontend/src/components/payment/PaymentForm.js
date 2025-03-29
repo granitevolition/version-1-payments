@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePayment } from '../../context/PaymentContext';
+import PaymentModal from './PaymentModal';
 import '../../App.css';
 
 /**
@@ -30,10 +31,14 @@ const PaymentForm = () => {
   // Get payment context
   const { 
     initiatePayment, 
-    redirectToLipiaCheckout,
     loading,
     error,
-    clearError
+    clearError,
+    openPaymentModal,
+    modalVisible,
+    closePaymentModal,
+    handlePaymentSuccess,
+    handlePaymentFailure
   } = usePayment();
   
   // Fetch user's word balance on component mount
@@ -142,14 +147,41 @@ const PaymentForm = () => {
       
       console.log('Payment initiated:', payment);
       
-      // Process 2: Redirect to Lipia checkout page with the same details
-      redirectToLipiaCheckout(formData.phone, formData.amount);
-      
-      // Note: The redirect will navigate away from this page, so any code after
-      // this point will not be executed unless the redirect fails
+      // Process 2: Open modal for payment instead of redirect
+      openPaymentModal(formData.phone, formData.amount, {
+        onSuccess: (data) => {
+          console.log('Payment completed successfully:', data);
+          // Refresh word balance after successful payment
+          fetchWordBalance();
+        },
+        onFailure: (error) => {
+          console.error('Payment failed:', error);
+        }
+      });
     } catch (err) {
       console.error('Payment initiation failed:', err);
       // Error handling is done by the context
+    }
+  };
+  
+  // Function to fetch word balance (used after successful payment)
+  const fetchWordBalance = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      
+      const response = await fetch(`/api/v1/words/user/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWordBalance(data.data.remaining_words);
+      }
+    } catch (error) {
+      console.error('Failed to fetch word balance:', error);
     }
   };
   
@@ -248,7 +280,7 @@ const PaymentForm = () => {
         </div>
         
         <div className="payment-info">
-          <p>You will be redirected to M-Pesa to complete your payment.</p>
+          <p>Secure payment powered by Lipia Online</p>
           <p>
             <small>
               Service provided by <strong>Lipia Online</strong>. 
@@ -257,6 +289,16 @@ const PaymentForm = () => {
           </p>
         </div>
       </form>
+      
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={modalVisible}
+        onClose={closePaymentModal}
+        phone={formData.phone}
+        amount={formData.amount}
+        onPaymentSuccess={handlePaymentSuccess}
+        onPaymentFailure={handlePaymentFailure}
+      />
     </div>
   );
 };
