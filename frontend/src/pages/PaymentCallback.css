@@ -1,0 +1,121 @@
+.payment-callback {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+.payment-callback-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.payment-callback-spinner {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.payment-callback-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: bold;
+}
+
+.payment-callback-icon.success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.payment-callback-icon.error {
+  background-color: #f44336;
+  color: white;
+}
+
+.payment-callback-title {
+  margin-bottom: 15px;
+  font-size: 24px;
+  color: #333;
+}
+
+.payment-callback.success .payment-callback-title {
+  color: #4caf50;
+}
+
+.payment-callback.error .payment-callback-title,
+.payment-callback.failed .payment-callback-title {
+  color: #f44336;
+}
+
+.payment-callback-message {
+  margin-bottom: 25px;
+  color: #666;
+  font-size: 16px;
+}
+
+.payment-callback-redirect {
+  color: #999;
+  font-size: 14px;
+  font-style: italic;
+  margin-top: 20px;
+}
+
+/* Animation for spinner */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Animation for container */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 576px) {
+  .payment-callback-container {
+    padding: 30px 20px;
+  }
+  
+  .payment-callback-title {
+    font-size: 20px;
+  }
+  
+  .payment-callback-message {
+    font-size: 14px;
+  }
+  
+  .payment-callback-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+  }
+}
