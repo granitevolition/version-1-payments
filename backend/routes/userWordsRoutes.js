@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const UserWords = require('../models/userWords');
-const auth = require('../middleware/auth');
 const logger = require('../utils/logger');
 
 /**
@@ -9,19 +8,11 @@ const logger = require('../utils/logger');
  * @desc    Get user's word balance
  * @access  Private
  */
-router.get('/user/:userId', auth, async (req, res) => {
+router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Ensure the requesting user matches the userId or is an admin
-    if (req.user.id !== parseInt(userId) && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to access this resource'
-      });
-    }
-    
-    const balance = await UserWords.getBalance(userId);
+    const balance = await UserWords.getUserBalance(userId);
     
     return res.status(200).json({
       success: true,
@@ -39,37 +30,35 @@ router.get('/user/:userId', auth, async (req, res) => {
 });
 
 /**
- * @route   POST /api/v1/words/user/:userId/add
- * @desc    Add words to user's balance (admin only)
- * @access  Private/Admin
+ * @route   POST /api/v1/words/add
+ * @desc    Add words to user's balance
+ * @access  Private
  */
-router.post('/user/:userId/add', auth, async (req, res) => {
+router.post('/add', async (req, res) => {
   try {
-    const { userId } = req.params;
-    const { words } = req.body;
+    const { userId, words } = req.body;
     
-    // Validate input
-    if (!words || isNaN(words) || words <= 0) {
+    if (!userId || !words) {
+      return res.status(400).json({
+        success: false,
+        message: 'UserId and words are required'
+      });
+    }
+    
+    const wordsToAdd = parseInt(words);
+    if (isNaN(wordsToAdd) || wordsToAdd <= 0) {
       return res.status(400).json({
         success: false,
         message: 'Words must be a positive number'
       });
     }
     
-    // Only admins can manually add words
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to perform this action'
-      });
-    }
-    
-    const balance = await UserWords.addWords(userId, parseInt(words));
+    const updatedBalance = await UserWords.addWords(userId, wordsToAdd);
     
     return res.status(200).json({
       success: true,
-      message: `Added ${words} words to user's balance`,
-      data: balance
+      message: `${wordsToAdd} words added to user's balance`,
+      data: updatedBalance
     });
   } catch (error) {
     logger.error('Error adding words to user balance', { error: error.message });
@@ -83,48 +72,49 @@ router.post('/user/:userId/add', auth, async (req, res) => {
 });
 
 /**
- * @route   POST /api/v1/words/user/:userId/use
+ * @route   POST /api/v1/words/use
  * @desc    Use words from user's balance
  * @access  Private
  */
-router.post('/user/:userId/use', auth, async (req, res) => {
+router.post('/use', async (req, res) => {
   try {
-    const { userId } = req.params;
-    const { words } = req.body;
+    const { userId, words } = req.body;
     
-    // Validate input
-    if (!words || isNaN(words) || words <= 0) {
+    if (!userId || !words) {
+      return res.status(400).json({
+        success: false,
+        message: 'UserId and words are required'
+      });
+    }
+    
+    const wordsToUse = parseInt(words);
+    if (isNaN(wordsToUse) || wordsToUse <= 0) {
       return res.status(400).json({
         success: false,
         message: 'Words must be a positive number'
       });
     }
     
-    // Ensure the requesting user matches the userId
-    if (req.user.id !== parseInt(userId) && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to access this resource'
-      });
-    }
+    // Check if user has enough words
+    const balance = await UserWords.getUserBalance(userId);
     
-    const result = await UserWords.useWords(userId, parseInt(words));
-    
-    if (!result.success) {
+    if (balance.remaining_words < wordsToUse) {
       return res.status(400).json({
         success: false,
-        message: result.message,
+        message: 'Insufficient word balance',
         data: {
-          currentBalance: result.currentBalance,
-          requested: result.requested
+          remaining_words: balance.remaining_words,
+          requested_words: wordsToUse
         }
       });
     }
     
+    const updatedBalance = await UserWords.useWords(userId, wordsToUse);
+    
     return res.status(200).json({
       success: true,
-      message: `Used ${words} words from user's balance`,
-      data: result.data
+      message: `${wordsToUse} words used from user's balance`,
+      data: updatedBalance
     });
   } catch (error) {
     logger.error('Error using words from user balance', { error: error.message });
@@ -132,6 +122,72 @@ router.post('/user/:userId/use', auth, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Server error while using words',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/v1/words/check-balance/:userId/:requiredWords
+ * @desc    Check if user has enough words
+ * @access  Private
+ */
+router.get('/check-balance/:userId/:requiredWords', async (req, res) => {
+  try {
+    const { userId, requiredWords } = req.params;
+    
+    const requiredWordsInt = parseInt(requiredWords);
+    if (isNaN(requiredWordsInt) || requiredWordsInt <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Required words must be a positive number'
+      });
+    }
+    
+    const balance = await UserWords.getUserBalance(userId);
+    const hasEnough = balance.remaining_words >= requiredWordsInt;
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        has_enough: hasEnough,
+        remaining_words: balance.remaining_words,
+        required_words: requiredWordsInt,
+        difference: balance.remaining_words - requiredWordsInt
+      }
+    });
+  } catch (error) {
+    logger.error('Error checking user word balance', { error: error.message });
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while checking balance',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/v1/words/stats/:userId
+ * @desc    Get user's word usage statistics
+ * @access  Private
+ */
+router.get('/stats/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const stats = await UserWords.getUsageStats(userId);
+    
+    return res.status(200).json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    logger.error('Error getting user word stats', { error: error.message });
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while getting word stats',
       error: error.message
     });
   }
