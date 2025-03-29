@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Payment integration with Lipia Online for word tracking",
   "private": true,
-  "main": "base-server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node base-server.js"
+    "start": "node index.js"
   },
   "engines": {
     "node": ">=16.0.0"
