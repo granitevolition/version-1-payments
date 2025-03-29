@@ -1,0 +1,137 @@
+/* Modal Overlay - Covers the entire screen */
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Modal Container */
+.payment-modal-container {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+  overflow: hidden;
+}
+
+/* Modal Header */
+.payment-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.payment-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+  font-weight: 600;
+}
+
+/* Close Button */
+.payment-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.payment-modal-close:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+.payment-modal-close:focus {
+  outline: none;
+}
+
+/* Modal Body */
+.payment-modal-body {
+  flex: 1;
+  min-height: 300px;
+  overflow: auto;
+}
+
+/* iframe container */
+.payment-iframe {
+  width: 100%;
+  height: 500px;
+  max-height: 70vh;
+  border: none;
+  display: block;
+}
+
+/* Modal Footer */
+.payment-modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #eee;
+  background-color: #f8f9fa;
+}
+
+.payment-modal-note {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .payment-modal-container {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .payment-iframe {
+    height: 450px;
+  }
+  
+  .payment-modal-header h3 {
+    font-size: 16px;
+  }
+}
