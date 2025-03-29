@@ -1,9 +1,5 @@
-node_modules
-npm-debug.log
-.env
-.git
-.github
-.gitignore
-README.md
-frontend
-**/.DS_Store
+# Ignore everything
+*
+
+# Except index.js
+!index.js
