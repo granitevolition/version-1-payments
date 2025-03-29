@@ -1,114 +1,134 @@
-# Version 1 Payments
+# Andikar AI Payment System
 
-A complete payment integration system for Andikar AI with Lipia Online M-Pesa support and word balance tracking.
+A comprehensive payment integration system for Andikar AI with Lipia Online M-Pesa support, modal popup integration, and word balance tracking.
+
+## Overview
+
+This payment system integrates Lipia Online for M-Pesa payments, providing a seamless experience where users never leave your application. It includes:
+
+- **Popup Modal Payment Form**: Users stay in your app while making payments
+- **Database Integration**: Automatic tracking of payments and word balances
+- **Word Credit System**: Automatically adds purchased words to user accounts
 
 ## Key Features
 
-- **Popup Modal Integration**: Embeds Lipia payment form in a modal instead of redirecting users
-- **Seamless User Experience**: Users remain within your application during the payment process
-- **Automatic Payment Verification**: Payments are verified and recorded in your database
-- **Word Balance Tracking**: Automatically adds purchased words to user accounts
-- **Beautiful UI**: Modern, responsive interface for payment management
+- **Modal Payment Integration**: Embeds Lipia in a modal instead of redirecting
+- **Automatic Callbacks**: Verifies and records payments in the database
+- **Word Balance Management**: API endpoints for checking, adding, and using words
+- **Comprehensive Dashboard**: Visual monitoring of payment plans
+- **PostgreSQL Integration**: Reliable storage of payment and balance data
 
-## Payment Tiers
+## System Architecture
+
+The system uses:
+- **Frontend**: React.js with iframe-based modal integration
+- **Backend**: Node.js/Express API with PostgreSQL database
+- **Payment Gateway**: Lipia Online for M-Pesa payments
+
+## Payment Flow
+
+1. User selects a payment plan in your application
+2. A modal popup opens with the Lipia payment form inside
+3. User completes payment without leaving your site
+4. Backend receives a callback confirming payment
+5. Word balance is updated automatically
+
+## Payment Plans
 
 | Plan | Price (KES) | Word Credits | Features |
 |------|-------------|--------------|----------|
-| Basic | 1,500 | 30,000 | Basic API Access, Standard Support |
-| Standard | 2,500 | 60,000 | Full API Access, Priority Support |
-| Premium | 4,000 | 100,000 | Advanced API Features, 24/7 Premium Support |
-
-## Implementation Details
-
-### Frontend Integration
-
-The payment integration uses a modal popup approach with an iframe:
-
-1. User clicks "Pay Now" on your website
-2. A modal window opens with the Lipia payment form embedded inside
-3. User completes payment without leaving your site
-4. Modal automatically closes upon completion
-5. User's word balance is updated in real-time
-
-### Backend Integration
-
-The backend handles payment verification and database updates:
-
-1. When payment is initiated, a record is created in the database
-2. Lipia sends a callback to your server when payment completes
-3. Backend verifies the payment and updates status
-4. Word credits are automatically added to the user's account
+| Basic | 1,500 | 30,000 | Basic API Access |
+| Standard | 2,500 | 60,000 | Full API Access |
+| Premium | 4,000 | 100,000 | Advanced Features |
 
 ## API Endpoints
 
+### Payment Endpoints
 - `POST /api/v1/payments/initiate` - Start a new payment
-- `POST /api/v1/payments/callback` - Handle payment completion from Lipia
+- `POST /api/v1/payments/callback` - Handle Lipia callbacks
 - `GET /api/v1/payments/:paymentId` - Get payment details
-- `GET /api/v1/payments/user/:userId` - Get user's payment history
-- `GET /api/v1/payments/url` - Get payment URL for the frontend
+- `GET /api/v1/payments/user/:userId` - Get payment history
 - `GET /api/v1/payments/status/:reference` - Check payment status
 
-## Deployment
+### Word Balance Endpoints
+- `GET /api/v1/words/user/:userId` - Get user's word balance
+- `POST /api/v1/words/add` - Add words to user's balance
+- `POST /api/v1/words/use` - Use words from user's balance
+- `GET /api/v1/words/check-balance/:userId/:requiredWords` - Check if user has enough words
+- `GET /api/v1/words/stats/:userId` - Get usage statistics
 
-### Frontend Deployment
+## Setting Up on Railway
 
-```bash
-# Navigate to frontend directory
-cd frontend
+### Prerequisites
+- A Railway account
+- A PostgreSQL database (can be provisioned in Railway)
+- A Lipia Online account
 
-# Install dependencies
-npm install
+### Deployment Steps
 
-# Build for production
-npm run build
+1. **Fork this repository** to your GitHub account
 
-# Deploy to hosting platform of choice
-```
+2. **Create a new Railway project**:
+   - Connect to your GitHub repository
+   - Railway will automatically detect the Dockerfile
 
-### Backend Deployment on Railway
+3. **Add PostgreSQL database**:
+   - In Railway, click "New Service" → "Database" → "PostgreSQL"
+   - Railway will automatically link the database to your app
 
-The backend is configured for easy deployment on Railway:
+4. **Set up environment variables**:
+   - `NODE_ENV` = production
+   - `LIPIA_URL` = https://lipia-online.vercel.app/link/andikar
+   - `CALLBACK_URL` = https://your-railway-domain.up.railway.app/api/v1/payments/callback
 
-1. Connect your GitHub repository to Railway
-2. Set up the following environment variables:
-   - `NODE_ENV=production`
-   - `DATABASE_PUBLIC_URL=${DATABASE_URL}` (automatically provided)
-   - `LIPIA_URL=https://lipia-online.vercel.app/link/andikar`
-   - `CALLBACK_URL=https://your-railway-domain.up.railway.app/api/v1/payments/callback`
-3. Deploy the application
+5. **Deploy your app**:
+   - Railway will automatically build and deploy your application
+   - The database schema will be created automatically on first run
+
+### Checking Deployment
+
+1. Visit `https://your-railway-domain.up.railway.app/`
+2. Check `/api/health` and `/api/health/db` endpoints
+3. Verify database connection in Railway logs
 
 ## Local Development
 
-To run locally:
-
 ```bash
 # Clone the repository
-git clone https://github.com/granitevolition/version-1-payments.git
+git clone https://github.com/yourusername/version-1-payments.git
 cd version-1-payments
 
-# Start the backend
+# Set up environment variables
+cp backend/.env.example backend/.env
+# Edit .env file with your settings
+
+# Install dependencies & run backend
 cd backend
 npm install
 npm run dev
 
-# In a new terminal, start the frontend
+# In another terminal, run frontend
 cd frontend
 npm install
 npm start
 ```
 
-## Screenshots
+## Troubleshooting
 
-### Payment Form with Modal
-![Payment Form](https://via.placeholder.com/600x300?text=Payment+Form+with+Modal)
+### Database Connection Issues
+- Check that DATABASE_URL environment variable is set correctly
+- Ensure SSL is enabled for production environments
+- Verify PostgreSQL is running and accessible
 
-### Payment Success Screen
-![Success Screen](https://via.placeholder.com/600x300?text=Payment+Success+Screen)
+### Payment Processing Issues
+- Verify Lipia Online URL is correct
+- Check callback URL is properly configured
+- Inspect server logs for error messages
 
-## Technology Stack
+## Security Notes
 
-- **Frontend**: React.js, Context API for state management
-- **Backend**: Node.js, Express
-- **Database**: PostgreSQL
-- **Payment Gateway**: Lipia Online (M-Pesa)
-- **Deployment**: Docker on Railway (backend), Vercel/Netlify (frontend)
+- All sensitive data is hidden in environment variables
+- Database passwords never appear in logs or responses
+- HTTPS is enforced in production environments
+
+Need help? Contact support@andikar.ai
