@@ -17,7 +17,7 @@ app.use(express.json()); // Parse JSON request body
 app.use(morgan('dev')); // HTTP request logger
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/api/health', async (req, res) => {
   try {
     // Check database connection
     const dbClient = await pool.connect();
