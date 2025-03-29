@@ -1,5 +1,6 @@
 # Ignore everything
 *
 
-# Except index.js
+# Don't ignore these files
 !index.js
+!package.json
