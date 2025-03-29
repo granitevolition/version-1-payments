@@ -1,0 +1,191 @@
+/* Payment Modal Styles */
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.payment-modal {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 550px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+}
+
+.payment-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.payment-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.payment-modal-content {
+  padding: 0;
+  flex: 1;
+  position: relative;
+  min-height: 400px;
+}
+
+.payment-iframe {
+  width: 100%;
+  border: none;
+  transition: opacity 0.3s;
+  min-height: 500px;
+}
+
+.payment-iframe.loading {
+  opacity: 0;
+}
+
+.payment-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9f9f9;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #3498db;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 15px;
+}
+
+.payment-modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-modal-footer p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #888;
+}
+
+.cancel-button {
+  background-color: #f2f2f2;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  color: #555;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #e0e0e0;
+}
+
+.payment-status {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  font-size: 1.125rem;
+  animation: fadeIn 0.3s;
+}
+
+.payment-status.success {
+  background-color: rgba(46, 204, 113, 0.95);
+  color: white;
+}
+
+.payment-status.failed {
+  background-color: rgba(231, 76, 60, 0.95);
+  color: white;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 600px) {
+  .payment-modal {
+    width: 95%;
+  }
+  
+  .payment-modal-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .payment-modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .payment-modal-footer p {
+    order: 2;
+  }
+  
+  .cancel-button {
+    order: 1;
+    width: 100%;
+  }
+}
