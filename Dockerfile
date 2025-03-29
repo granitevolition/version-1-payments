@@ -2,35 +2,26 @@ FROM node:16-alpine
 
 WORKDIR /app
 
-# Install additional packages 
+# Install curl for health checks
 RUN apk --no-cache add curl
 
-# Copy package files first for better caching
-COPY backend/package*.json ./backend/
+# Copy package.json and minimal server
+COPY package.json .
+COPY minimal-server.js .
 
-# Install dependencies
-RUN cd backend && npm install
-
-# Copy the rest of the application
-COPY backend ./backend
-COPY database ./database
-
-# Create utils directory if it doesn't exist
-RUN mkdir -p backend/utils
-
-# Create directories for logs
-RUN mkdir -p /app/logs
+# Install just express
+RUN npm install express
 
 # Set environment variables
-ENV NODE_ENV=production
 ENV PORT=8080
+ENV NODE_ENV=production
 
 # Expose the port
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/api/health || exit 1
 
 # Start the application
-CMD ["node", "backend/server.js"]
+CMD ["node", "minimal-server.js"]
