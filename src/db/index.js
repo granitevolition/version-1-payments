@@ -1,38 +1,77 @@
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
-// Determine which database URL to use
-const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
+// Create database connection function with retry logic
+function createDatabaseConnection() {
+  try {
+    // Determine which database URL to use
+    const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
 
-if (!dbUrl) {
-  logger.error('No database URL found in environment variables!');
-  logger.error('Please set DATABASE_URL or DATABASE_PUBLIC_URL');
-  process.exit(1);
+    if (!dbUrl) {
+      logger.warn('No database URL found in environment variables!');
+      logger.warn('Please set DATABASE_URL or DATABASE_PUBLIC_URL');
+      // Return null instead of exiting to allow service to start without DB
+      return null;
+    }
+
+    // Log the environment
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    
+    // Create a new Pool instance
+    const pool = new Pool({
+      connectionString: dbUrl,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      // Add some connection pool settings
+      max: 20, // Maximum number of clients
+      idleTimeoutMillis: 30000, // How long a client is idle before closed
+      connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection not established
+    });
+
+    // Add error handler to the pool
+    pool.on('error', (err, client) => {
+      logger.error('Unexpected database pool error:', err);
+      // Do not exit process on connection errors
+    });
+
+    return pool;
+  } catch (error) {
+    logger.error('Error creating database connection pool:', error);
+    // Return null instead of exiting to allow service to start without DB
+    return null;
+  }
 }
 
-// Create a new Pool instance
-const pool = new Pool({
-  connectionString: dbUrl,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
+// Create the pool
+const pool = createDatabaseConnection();
 
 // Test database connection
 async function testConnection() {
+  if (!pool) {
+    logger.warn('No database pool available to test connection');
+    return false;
+  }
+  
   try {
     const client = await pool.connect();
     logger.info('Database connection established successfully');
     client.release();
     return true;
   } catch (error) {
-    logger.error('Database connection failed:', error);
+    logger.error('Database connection test failed:', error);
     return false;
   }
 }
 
 // Initialize database tables
 async function initializeDatabase() {
-  const client = await pool.connect();
+  if (!pool) {
+    logger.warn('No database pool available to initialize database');
+    return false;
+  }
+  
+  let client;
   try {
+    client = await pool.connect();
     logger.info('Creating database tables if they do not exist...');
     
     // Create users table
@@ -76,18 +115,29 @@ async function initializeDatabase() {
     `);
     
     logger.info('Database tables created successfully');
+    return true;
   } catch (error) {
     logger.error('Error initializing database:', error);
-    throw error;
+    return false;
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 
-// Create a query function that logs queries for debugging
-function query(text, params) {
+// Create a query function that handles potential connection issues
+async function query(text, params) {
+  if (!pool) {
+    logger.error('Database query attempted but no pool is available');
+    throw new Error('Database connection not available');
+  }
+  
   logger.debug('Executing query:', { text, params });
-  return pool.query(text, params);
+  try {
+    return await pool.query(text, params);
+  } catch (error) {
+    logger.error('Database query error:', error);
+    throw error;
+  }
 }
 
 module.exports = {
