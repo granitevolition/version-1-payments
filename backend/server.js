@@ -16,8 +16,17 @@ app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request body
 app.use(morgan('dev')); // HTTP request logger
 
-// Health check endpoint
-app.get('/api/health', async (req, res) => {
+// Simple health check that doesn't depend on database
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Payment service is running',
+    timestamp: new Date()
+  });
+});
+
+// More thorough health check with DB connection
+app.get('/api/health/db', async (req, res) => {
   try {
     // Check database connection
     const dbClient = await pool.connect();
@@ -65,8 +74,8 @@ app.use('*', (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Payment service running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
