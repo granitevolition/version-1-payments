@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "description": "Payment integration with Lipia Online for word tracking",
   "private": true,
+  "main": "minimal-server.js",
+  "scripts": {
+    "start": "node minimal-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
   "engines": {
     "node": ">=16.0.0"
   }
