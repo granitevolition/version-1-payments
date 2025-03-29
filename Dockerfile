@@ -6,14 +6,21 @@ WORKDIR /app
 # Install system dependencies
 RUN apk --no-cache add curl postgresql-client
 
-# Copy backend package.json and package-lock.json
-COPY backend/package*.json ./
+# First, copy everything to build context
+COPY . .
+
+# Check if the backend directory exists and show directory structure
+RUN ls -la && echo "Current directory contents:" && \
+    if [ -d "backend" ]; then \
+      echo "backend directory found!"; \
+      ls -la backend; \
+    else \
+      echo "backend directory NOT found! Showing all contents:"; \
+      find . -type d | sort; \
+    fi
 
 # Install dependencies
-RUN npm install
-
-# Copy backend files
-COPY backend ./
+RUN cd backend && npm install
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -22,14 +29,12 @@ ENV PORT=8080
 # Expose the port
 EXPOSE 8080
 
-# Show current PostgreSQL connection string and environment (masked)
-RUN echo "Database URL: $(echo $DATABASE_URL | sed 's/:[^:]*@/:*****@/')"
-RUN echo "Database Public URL: $(echo $DATABASE_PUBLIC_URL | sed 's/:[^:]*@/:*****@/')"
-RUN echo "Environment: $NODE_ENV"
-
-# Database connectivity check at startup
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8080/api/health/db || exit 1
-
-# Start the application
-CMD ["node", "server.js"]
+# Database debugging info at startup
+CMD echo "Starting server..." && \
+    echo "Environment variables:" && \
+    echo "NODE_ENV: $NODE_ENV" && \
+    echo "DATABASE_URL exists: $(if [ -n "$DATABASE_URL" ]; then echo 'YES'; else echo 'NO'; fi)" && \
+    echo "DATABASE_PUBLIC_URL exists: $(if [ -n "$DATABASE_PUBLIC_URL" ]; then echo 'YES'; else echo 'NO'; fi)" && \
+    echo "Starting application from /app/backend directory" && \
+    cd backend && \
+    node server.js
