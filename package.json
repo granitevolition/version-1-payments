@@ -3,23 +3,7 @@
   "version": "1.0.0",
   "description": "Payment integration with Lipia Online for word tracking",
   "private": true,
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
-  "scripts": {
-    "install": "cd backend && npm install",
-    "start": "cd backend && npm start",
-    "dev": "cd backend && npm run dev"
-  },
   "engines": {
     "node": ">=16.0.0"
-  },
-  "keywords": [
-    "payments",
-    "mpesa",
-    "lipia"
-  ],
-  "author": "Granite Volition",
-  "license": "UNLICENSED"
+  }
 }
