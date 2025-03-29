@@ -3,9 +3,11 @@
   "build": {
     "builder": "DOCKERFILE",
     "watchPatterns": [
-      "backend/**",
+      "src/**",
+      "server.js",
       "Dockerfile",
-      "railway.json"
+      "railway.json",
+      "package.json"
     ]
   },
   "deploy": {
