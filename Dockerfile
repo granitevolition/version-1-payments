@@ -5,8 +5,8 @@ WORKDIR /app
 # Install curl for health checks
 RUN apk --no-cache add curl
 
-# Copy base server
-COPY base-server.js .
+# Copy index.js file
+COPY index.js .
 
 # Set environment variables
 ENV PORT=8080
@@ -20,4 +20,4 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/api/health || exit 1
 
 # Start the application
-CMD ["node", "base-server.js"]
+CMD ["node", "index.js"]
