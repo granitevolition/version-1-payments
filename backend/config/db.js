@@ -1,51 +1,94 @@
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
-/**
- * Database connection configuration
- * Uses Railway's automatically-provided PostgreSQL connection variables
- */
-const pool = new Pool({
-  // The DATABASE_URL is automatically provided by Railway
-  // If not available, we build the connection string from individual params
-  connectionString: process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL,
-  
-  // If individual connection parameters are provided, use those as fallback
-  host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || process.env.POSTGRES_DB || 'railway',
-  user: process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
-  password: process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD,
-  port: process.env.PGPORT || 5432,
-  
-  // Connection pool settings
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-  
-  // SSL settings (required for Railway)
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+// Log database connection parameters (with sensitive info masked)
+console.log('Database connection configuration:');
+console.log(`DATABASE_URL: ${process.env.DATABASE_URL ? 'Defined ✓' : 'MISSING ⚠️'}`);
+console.log(`DATABASE_PUBLIC_URL: ${process.env.DATABASE_PUBLIC_URL ? 'Defined ✓' : 'MISSING ⚠️'}`);
+console.log(`PGDATABASE: ${process.env.PGDATABASE || '(not set)'}`);
+console.log(`PGHOST: ${process.env.PGHOST || '(not set)'}`);
+console.log(`PGUSER: ${process.env.PGUSER ? 'Defined ✓' : '(not set)'}`);
+console.log(`PGPASSWORD: ${process.env.PGPASSWORD ? 'Defined ✓' : '(not set)'}`);
+console.log(`PGPORT: ${process.env.PGPORT || '5432 (default)'}`);
+console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+
+// Determine the connection string to use
+const connectionString = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
+if (!connectionString) {
+  console.warn('WARNING: No DATABASE_URL or DATABASE_PUBLIC_URL defined');
+  console.warn('Will attempt to use individual connection parameters instead');
+}
+
+// Create database configuration
+const dbConfig = connectionString 
+  ? { connectionString } // Use connection string if available
+  : {
+      // Otherwise try individual parameters with defaults
+      host: process.env.PGHOST || 'localhost',
+      database: process.env.PGDATABASE || process.env.POSTGRES_DB || 'railway',
+      user: process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
+      password: process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD,
+      port: process.env.PGPORT || 5432,
+    };
+
+// Add SSL configuration for production
+if (process.env.NODE_ENV === 'production') {
+  dbConfig.ssl = { rejectUnauthorized: false };
+  console.log('SSL enabled for database connection in production');
+}
+
+// Add pool configuration
+dbConfig.max = 20;
+dbConfig.idleTimeoutMillis = 30000;
+dbConfig.connectionTimeoutMillis = 5000;
+
+// Create the pool
+const pool = new Pool(dbConfig);
+
+// Log pool events for debugging
+pool.on('connect', () => {
+  console.log('New client connected to PostgreSQL');
 });
 
-// Test the database connection
-pool.connect((err, client, release) => {
-  if (err) {
-    logger.error('Error connecting to PostgreSQL database', { error: err.message });
-    return;
-  }
-  
-  logger.info('Successfully connected to PostgreSQL database');
-  
-  // Check if tables exist, create them if they don't
-  initializeDatabase(client)
-    .then(() => {
-      logger.info('Database schema initialized successfully');
-      release();
-    })
-    .catch(error => {
-      logger.error('Error initializing database schema', { error: error.message });
-      release();
-    });
+pool.on('error', (err) => {
+  console.error('PostgreSQL pool error:', err.message);
 });
+
+// Verify database connection immediately
+async function verifyConnection() {
+  let client;
+  try {
+    console.log('Attempting database connection...');
+    client = await pool.connect();
+    console.log('Database connection successful! 🎉');
+    
+    // Test query
+    const result = await client.query('SELECT NOW() as current_time');
+    console.log(`Database time: ${result.rows[0].current_time}`);
+    
+    // Try to create tables immediately
+    await initializeDatabase(client);
+    return true;
+  } catch (err) {
+    console.error('ERROR: Database connection failed!');
+    console.error(`Error message: ${err.message}`);
+    
+    // More detailed error information
+    if (err.code === 'ECONNREFUSED') {
+      console.error('Could not connect to PostgreSQL server. Please check if the database server is running and the connection parameters are correct.');
+    } else if (err.code === '28P01') {
+      console.error('Authentication failed. Please check username and password.');
+    } else if (err.code === '3D000') {
+      console.error('Database does not exist. Please create the database first.');
+    }
+    
+    return false;
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+}
 
 /**
  * Initialize database schema if tables don't exist
@@ -53,6 +96,8 @@ pool.connect((err, client, release) => {
  */
 async function initializeDatabase(client) {
   try {
+    console.log('Initializing database schema...');
+    
     // Create payments table
     await client.query(`
       CREATE TABLE IF NOT EXISTS payments (
@@ -70,6 +115,7 @@ async function initializeDatabase(client) {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log('- payments table ready');
     
     // Create user_words table
     await client.query(`
@@ -83,6 +129,7 @@ async function initializeDatabase(client) {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log('- user_words table ready');
     
     // Create payment_callbacks table for auditing
     await client.query(`
@@ -96,13 +143,34 @@ async function initializeDatabase(client) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log('- payment_callbacks table ready');
+    
+    console.log('Database schema initialization complete! 🎉');
+    
+    // Check if tables have any data
+    const paymentCount = await client.query('SELECT COUNT(*) FROM payments');
+    const userWordsCount = await client.query('SELECT COUNT(*) FROM user_words');
+    console.log(`Database statistics: ${paymentCount.rows[0].count} payments, ${userWordsCount.rows[0].count} user word records`);
     
     return true;
   } catch (error) {
-    logger.error('Error creating database tables', { error: error.message });
+    console.error('Error creating database tables:', error.message);
     throw error;
   }
 }
+
+// Try connection immediately
+verifyConnection()
+  .then(success => {
+    if (success) {
+      logger.info('Database connected and initialized successfully on startup');
+    } else {
+      logger.error('Database connection failed on startup');
+    }
+  })
+  .catch(err => {
+    logger.error('Error during database initialization:', { error: err.message });
+  });
 
 /**
  * Execute a database query
@@ -136,5 +204,7 @@ const query = async (text, params) => {
 
 module.exports = {
   query,
-  pool
+  pool,
+  verifyConnection,
+  initializeDatabase
 };
