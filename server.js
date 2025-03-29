@@ -9,6 +9,7 @@ const logger = require('./src/utils/logger');
 const authRoutes = require('./src/routes/auth.routes');
 const paymentRoutes = require('./src/routes/payment.routes');
 const wordsRoutes = require('./src/routes/words.routes');
+const healthRoutes = require('./src/routes/health.routes');
 
 // Initialize express app
 const app = express();
@@ -25,11 +26,6 @@ app.use(morgan('combined', {
   stream: { write: message => logger.info(message.trim()) }
 }));
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/words', wordsRoutes);
-
 // Root endpoint
 app.get('/', (req, res) => {
   res.status(200).json({ 
@@ -40,27 +36,13 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check endpoint - Always returns OK to pass health checks
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
-});
+// Health check routes - must be registered before other middleware for reliability
+app.use('/api/health', healthRoutes);
 
-// Database health check
-app.get('/api/health/db', async (req, res) => {
-  try {
-    const dbConnected = await testConnection();
-    if (dbConnected) {
-      res.status(200).json({ status: 'ok', message: 'Database is connected' });
-    } else {
-      // Still return 200 but with a warning message
-      res.status(200).json({ status: 'warning', message: 'Database connection failed, but service is operational' });
-    }
-  } catch (error) {
-    logger.error('Database health check error:', error);
-    // Still return 200 to pass health checks
-    res.status(200).json({ status: 'warning', message: 'Database error, but service is operational' });
-  }
-});
+// Routes that require authentication
+app.use('/api/auth', authRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/words', wordsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -81,24 +63,42 @@ async function startServer() {
       if (dbConnected) {
         logger.info('Database connected successfully');
         // Initialize database tables
-        await initializeDatabase();
+        try {
+          await initializeDatabase();
+          logger.info('Database tables initialized successfully');
+        } catch (dbInitError) {
+          logger.error('Database initialization error:', dbInitError);
+          logger.warn('Continuing with potentially incomplete database schema');
+        }
       } else {
         logger.warn('Failed to connect to database. Continuing without database functionality.');
       }
     } catch (dbError) {
-      logger.error('Database initialization error:', dbError);
+      logger.error('Database connection error:', dbError);
       logger.warn('Continuing server startup without database functionality');
     }
     
     // Start the server regardless of database connection
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
+      logger.info(`Health check endpoint: http://localhost:${PORT}/api/health`);
     });
   } catch (error) {
     logger.error('Server startup error:', error);
     process.exit(1);
   }
 }
+
+// Handle uncaught exceptions and unhandled promise rejections
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception:', error);
+  // Don't exit the process to keep the server running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled promise rejection:', reason);
+  // Don't exit the process to keep the server running
+});
 
 // Start the server
 startServer();
