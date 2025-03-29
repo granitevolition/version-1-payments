@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andikar Payment System</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>Andikar Payment System</h1>
+      <p class="app-subtitle">Choose a plan to power your AI writing needs</p>
+    </header>
+    
+    <main class="app-main">
+      <div class="payment-form-container">
+        <h2>Select a Word Credit Package</h2>
+        
+        <div class="word-balance-info">
+          <p>Your current balance: <strong id="wordBalance">0</strong> words</p>
+        </div>
+        
+        <div class="payment-plans" id="paymentPlans">
+          <!-- Payment plans will be loaded dynamically -->
+          <div class="loading">Loading payment plans...</div>
+        </div>
+        
+        <div class="form-actions">
+          <button id="payNowButton" class="btn btn-primary" disabled>Pay Now with M-Pesa</button>
+        </div>
+        
+        <div class="payment-info">
+          <p>Secure payment processing by Lipia Online. No credit card required!</p>
+        </div>
+      </div>
+    </main>
+    
+    <footer class="app-footer">
+      <p>&copy; 2025 Andikar AI. All rights reserved.</p>
+      <div class="app-footer-links">
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+      </div>
+    </footer>
+  </div>
+  
+  <!-- Payment Modal -->
+  <div id="paymentModal" class="payment-modal-overlay" style="display: none;">
+    <div class="payment-modal">
+      <div class="payment-modal-header">
+        <h2>Complete Your Payment</h2>
+        <button class="close-button" id="closeModalButton">&times;</button>
+      </div>
+      
+      <div class="payment-modal-content">
+        <div class="payment-loading">
+          <div class="spinner"></div>
+          <p>Loading payment form...</p>
+        </div>
+        
+        <iframe
+          id="paymentIframe"
+          src=""
+          title="Payment Form"
+          class="payment-iframe loading"
+          height="500"
+          allow="payment"
+        ></iframe>
+      </div>
+      
+      <div class="payment-modal-footer">
+        <p>Secure payment powered by Lipia Online & M-Pesa</p>
+        <button class="cancel-button" id="cancelPaymentButton">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
