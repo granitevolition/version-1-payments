@@ -5,12 +5,8 @@ WORKDIR /app
 # Install curl for health checks
 RUN apk --no-cache add curl
 
-# Copy package.json and minimal server
-COPY package.json .
-COPY minimal-server.js .
-
-# Install just express
-RUN npm install express
+# Copy base server
+COPY base-server.js .
 
 # Set environment variables
 ENV PORT=8080
@@ -24,4 +20,4 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/api/health || exit 1
 
 # Start the application
-CMD ["node", "minimal-server.js"]
+CMD ["node", "base-server.js"]
