@@ -4,7 +4,7 @@
   "description": "Payment system with Lipia Online integration for Andikar AI",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "if [ -f \"./server.js\" ]; then node server.js; elif [ -f \"./src/server.js\" ]; then node src/server.js; else node emergency-server.js; fi",
     "dev": "nodemon server.js",
     "migrate": "node src/db/migrate.js",
     "test": "jest"
