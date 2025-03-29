@@ -2,10 +2,10 @@
   "name": "andikar-payment-system",
   "version": "1.0.0",
   "description": "Payment system with Lipia Online integration for Andikar AI",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "if [ -f \"./server.js\" ]; then node server.js; elif [ -f \"./src/server.js\" ]; then node src/server.js; elif [ -f \"./emergency-server.js\" ]; then node emergency-server.js; else node health.js; fi",
-    "dev": "nodemon server.js",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "migrate": "node src/db/migrate.js",
     "test": "jest",
     "health": "node health.js"
