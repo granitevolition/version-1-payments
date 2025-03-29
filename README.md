@@ -1,15 +1,14 @@
 # Version 1 Payments
 
-A beautiful dashboard and API server for Lipia Online payment integration.
+A complete payment integration system for Andikar AI with Lipia Online M-Pesa support and word balance tracking.
 
-![Version 1 Payments Dashboard](https://via.placeholder.com/800x450?text=Version+1+Payments+Dashboard)
+## Key Features
 
-## Features
-
-- **Beautiful GUI Dashboard**: Modern, responsive interface for payment management
-- **Payment Plans Visualization**: Display of available payment tiers with pricing
-- **Simple Health Check API**: Reliable endpoint for monitoring
-- **M-Pesa Integration**: Connection to Lipia Online payment service
+- **Popup Modal Integration**: Embeds Lipia payment form in a modal instead of redirecting users
+- **Seamless User Experience**: Users remain within your application during the payment process
+- **Automatic Payment Verification**: Payments are verified and recorded in your database
+- **Word Balance Tracking**: Automatically adds purchased words to user accounts
+- **Beautiful UI**: Modern, responsive interface for payment management
 
 ## Payment Tiers
 
@@ -19,19 +18,64 @@ A beautiful dashboard and API server for Lipia Online payment integration.
 | Standard | 2,500 | 60,000 | Full API Access, Priority Support |
 | Premium | 4,000 | 100,000 | Advanced API Features, 24/7 Premium Support |
 
-## Deployment on Railway
+## Implementation Details
 
-This project is configured for easy deployment on Railway with Docker:
+### Frontend Integration
 
-1. The Dockerfile handles all build requirements
-2. No external dependencies needed
-3. Health check endpoint at `/api/health` ensures uptime monitoring
-4. GUI dashboard available at the root URL
+The payment integration uses a modal popup approach with an iframe:
+
+1. User clicks "Pay Now" on your website
+2. A modal window opens with the Lipia payment form embedded inside
+3. User completes payment without leaving your site
+4. Modal automatically closes upon completion
+5. User's word balance is updated in real-time
+
+### Backend Integration
+
+The backend handles payment verification and database updates:
+
+1. When payment is initiated, a record is created in the database
+2. Lipia sends a callback to your server when payment completes
+3. Backend verifies the payment and updates status
+4. Word credits are automatically added to the user's account
 
 ## API Endpoints
 
-- `/api/health` - Health check endpoint
-- `/` - Main dashboard GUI
+- `POST /api/v1/payments/initiate` - Start a new payment
+- `POST /api/v1/payments/callback` - Handle payment completion from Lipia
+- `GET /api/v1/payments/:paymentId` - Get payment details
+- `GET /api/v1/payments/user/:userId` - Get user's payment history
+- `GET /api/v1/payments/url` - Get payment URL for the frontend
+- `GET /api/v1/payments/status/:reference` - Check payment status
+
+## Deployment
+
+### Frontend Deployment
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Build for production
+npm run build
+
+# Deploy to hosting platform of choice
+```
+
+### Backend Deployment on Railway
+
+The backend is configured for easy deployment on Railway:
+
+1. Connect your GitHub repository to Railway
+2. Set up the following environment variables:
+   - `NODE_ENV=production`
+   - `DATABASE_PUBLIC_URL=${DATABASE_URL}` (automatically provided)
+   - `LIPIA_URL=https://lipia-online.vercel.app/link/andikar`
+   - `CALLBACK_URL=https://your-railway-domain.up.railway.app/api/v1/payments/callback`
+3. Deploy the application
 
 ## Local Development
 
@@ -42,23 +86,29 @@ To run locally:
 git clone https://github.com/granitevolition/version-1-payments.git
 cd version-1-payments
 
-# Run with Node.js
-node index.js
-```
+# Start the backend
+cd backend
+npm install
+npm run dev
 
-Then visit http://localhost:8080 in your browser.
+# In a new terminal, start the frontend
+cd frontend
+npm install
+npm start
+```
 
 ## Screenshots
 
-### Dashboard
-![Dashboard](https://via.placeholder.com/600x300?text=Dashboard)
+### Payment Form with Modal
+![Payment Form](https://via.placeholder.com/600x300?text=Payment+Form+with+Modal)
 
-### Health Check
-![Health Check](https://via.placeholder.com/600x300?text=Health+Check+API)
+### Payment Success Screen
+![Success Screen](https://via.placeholder.com/600x300?text=Payment+Success+Screen)
 
 ## Technology Stack
 
-- **Backend**: Node.js (no external dependencies)
-- **Frontend**: HTML/CSS (embedded in index.js)
-- **Deployment**: Docker on Railway
+- **Frontend**: React.js, Context API for state management
+- **Backend**: Node.js, Express
+- **Database**: PostgreSQL
 - **Payment Gateway**: Lipia Online (M-Pesa)
+- **Deployment**: Docker on Railway (backend), Vercel/Netlify (frontend)
