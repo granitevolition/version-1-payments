@@ -4,8 +4,8 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "node base-server.js",
+    "startCommand": "node index.js",
     "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 5
+    "healthcheckTimeout": 3
   }
 }
